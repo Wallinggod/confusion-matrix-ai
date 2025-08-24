@@ -4,528 +4,848 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>COVID-19 Test Accuracy Simulator</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #f0f9ff 0%, #e6f3fe 100%);
+            color: #1e293b;
+            line-height: 1.6;
             min-height: 100vh;
+            padding: 20px;
         }
-        .header-gradient {
-            background: linear-gradient(90deg, #0369a1 0%, #0ea5e9 100%);
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
         }
-        .metric-card {
-            @apply bg-white p-5 rounded-xl shadow-md border border-gray-100 flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+        
+        /* Header Styles */
+        .header {
+            background: linear-gradient(120deg, #0ea5e9 0%, #0369a1 100%);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 30px;
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
-        .matrix-container {
-            @apply bg-white p-4 rounded-xl shadow-md border border-gray-100;
+        
+        .header h1 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 2.5rem;
+            margin-bottom: 8px;
         }
-        .matrix-cell {
-            @apply p-4 rounded-lg text-center flex flex-col justify-center items-center transition-transform duration-300;
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
         }
-        .matrix-value {
-            @apply text-4xl font-bold;
+        
+        /* Main Layout */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
         }
-        .matrix-label {
-            @apply text-xs mt-1 font-medium tracking-wide uppercase;
+        
+        @media (min-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr 1fr;
+            }
         }
-        .explanation-card {
-            @apply bg-white p-6 rounded-xl shadow-md border border-gray-100 flex flex-col;
+        
+        /* Panel Styles */
+        .panel {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 30px;
         }
-        .formula {
-            @apply bg-gray-100 p-3 rounded-md text-center text-gray-700 font-mono text-sm mt-4 border border-gray-200;
+        
+        .panel-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
+        
+        .panel-title i {
+            color: #0ea5e9;
+        }
+        
+        /* Input Styles */
+        .input-group {
+            margin-bottom: 24px;
+        }
+        
+        .input-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #334155;
+        }
+        
+        .input-group input[type="number"] {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .input-group input[type="number"]:focus {
+            outline: none;
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+        }
+        
+        .slider-container {
+            margin-top: 12px;
+        }
+        
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #e2e8f0;
+            outline: none;
+        }
+        
         .slider::-webkit-slider-thumb {
-            @apply w-5 h-5 bg-blue-600 rounded-full appearance-none cursor-pointer transition-transform duration-200;
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #0ea5e9;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
-        .slider:hover::-webkit-slider-thumb {
-            @apply transform scale-110;
+        
+        .slider-values {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 0.875rem;
+            color: #64748b;
         }
-        .covid-bg-pattern {
-            background-image: radial-gradient(#0ea5e9 0.5px, transparent 0.5px), radial-gradient(#0ea5e9 0.5px, #e6f3fe 0.5px);
-            background-size: 20px 20px;
-            background-position: 0 0, 10px 10px;
+        
+        .slider-value {
+            font-weight: 600;
+            color: #0ea5e9;
         }
-        .nav-tab {
-            @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+        
+        /* Button Styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 24px;
+            background: #0ea5e9;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.3), 0 2px 4px -1px rgba(14, 165, 233, 0.1);
+            width: 100%;
         }
-        .nav-tab.active {
-            @apply bg-white text-blue-700 shadow-sm;
+        
+        .btn:hover {
+            background: #0284c7;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(14, 165, 233, 0.3), 0 4px 6px -2px rgba(14, 165, 233, 0.1);
+        }
+        
+        .btn i {
+            margin-right: 8px;
+        }
+        
+        /* Results Section */
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+        
+        @media (min-width: 768px) {
+            .results-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        @media (min-width: 1280px) {
+            .results-grid {
+                grid-template-columns: 1fr 1fr 1fr 1fr;
+            }
+        }
+        
+        .result-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 16px;
+            padding: 28px;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .result-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .result-value {
+            font-family: 'Poppins', sans-serif;
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 16px 0;
+            color: #0f172a;
+        }
+        
+        .result-label {
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 8px;
+        }
+        
+        .result-description {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+        
+        /* Matrix Section */
+        .matrix-container {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            margin-top: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .matrix-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: #0f172a;
+            text-align: center;
+        }
+        
+        .matrix {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        
+        @media (min-width: 768px) {
+            .matrix {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .matrix-cell {
+            padding: 24px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .matrix-cell.true-positive {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            border: 2px solid #22c55e;
+        }
+        
+        .matrix-cell.false-negative {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border: 2px solid #ef4444;
+        }
+        
+        .matrix-cell.false-positive {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border: 2px solid #ef4444;
+        }
+        
+        .matrix-cell.true-negative {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            border: 2px solid #22c55e;
+        }
+        
+        .matrix-value {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 12px 0;
+        }
+        
+        .matrix-label {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .matrix-description {
+            font-size: 0.875rem;
+            margin-top: 8px;
+            color: #64748b;
+        }
+        
+        /* Mobile Navigation */
+        .mobile-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-btn {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            font-weight: 500;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-btn.active {
+            background: #0ea5e9;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.3);
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+        
+        /* Page Containers */
+        .page-container {
+            display: none;
+        }
+        
+        .page-container.active {
+            display: block;
+        }
+        
+        /* Visualization Styles */
+        .chart-container {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .chart-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #0f172a;
+            text-align: center;
+        }
+        
+        /* How It Works Styles */
+        .step-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: #0ea5e9;
+            color: white;
+            border-radius: 50%;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        
+        .step-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #0f172a;
+        }
+        
+        /* Scenario Styles */
+        .scenario-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .scenario-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .scenario-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #0f172a;
+        }
+        
+        .scenario-description {
+            color: #64748b;
+            margin-bottom: 16px;
+        }
+        
+        .scenario-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+        }
+        
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .stat-value {
+            font-weight: 600;
+            color: #0ea5e9;
+        }
+        
+        .stat-label {
+            color: #64748b;
         }
     </style>
 </head>
-<body class="p-4 sm:p-6 md:p-8 covid-bg-pattern">
-
-    <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <div class="header-gradient rounded-2xl p-6 mb-8 text-white shadow-lg">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div class="text-left">
-                    <h1 class="text-3xl md:text-4xl font-bold">COVID-19 Test Accuracy Simulator</h1>
-                    <p class="text-blue-100 mt-2">Evaluate COVID-19 test kit performance using confusion matrix analysis</p>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>COVID-19 Test Accuracy Simulator</h1>
+            <p>Evaluate COVID-19 test kit performance using confusion matrix analysis</p>
+        </div>
+        
+        <div class="mobile-nav">
+            <div class="nav-btn active" data-page="simulator">Simulator</div>
+            <div class="nav-btn" data-page="visualization">Visualization</div>
+            <div class="nav-btn" data-page="scenarios">Scenarios</div>
+            <div class="nav-btn" data-page="explanation">How It Works</div>
+        </div>
+        
+        <!-- Simulator Page -->
+        <div class="page-container active" id="simulator-page">
+            <div class="main-content">
+                <div class="left-column">
+                    <div class="panel">
+                        <h2 class="panel-title"><i class="fas fa-sliders-h"></i> Test Parameters</h2>
+                        
+                        <form id="simulation-form">
+                            <div class="input-group">
+                                <label for="total-patients">Population Tested</label>
+                                <input type="number" id="total-patients" value="1000" min="1" max="100000">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="actual-positives">Actual COVID-19 Prevalence</label>
+                                <div class="slider-container">
+                                    <input type="range" min="0" max="100" value="10" class="slider" id="actual-positives">
+                                    <div class="slider-values">
+                                        <span>0%</span>
+                                        <span class="slider-value" id="actual-positives-value">10%</span>
+                                        <span>100%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="sensitivity">Sensitivity (True Positive Rate)</label>
+                                <div class="slider-container">
+                                    <input type="range" min="0" max="100" value="95" class="slider" id="sensitivity">
+                                    <div class="slider-values">
+                                        <span>0%</span>
+                                        <span class="slider-value" id="sensitivity-value">95%</span>
+                                        <span>100%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="specificity">Specificity (True Negative Rate)</label>
+                                <div class="slider-container">
+                                    <input type="range" min="0" max="100" value="98" class="slider" id="specificity">
+                                    <div class="slider-values">
+                                        <span>0%</span>
+                                        <span class="slider-value" id="specificity-value">98%</span>
+                                        <span>100%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn"><i class="fas fa-calculator"></i> Evaluate Test Kit</button>
+                        </form>
+                    </div>
                 </div>
-                <button id="show-explanation-btn" class="flex-shrink-0 bg-white text-blue-700 font-semibold py-2 px-5 rounded-lg hover:bg-blue-50 transition-all duration-200 shadow-sm flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
-                    How It Works
-                </button>
+                
+                <div class="right-column">
+                    <div class="panel">
+                        <h2 class="panel-title"><i class="fas fa-chart-line"></i> Test Performance Metrics</h2>
+                        
+                        <div class="results-grid">
+                            <div class="result-card">
+                                <div class="result-label">Accuracy</div>
+                                <div class="result-value" id="accuracy">0%</div>
+                                <div class="result-description">Overall test correctness</div>
+                            </div>
+                            
+                            <div class="result-card">
+                                <div class="result-label">Precision</div>
+                                <div class="result-value" id="precision">0%</div>
+                                <div class="result-description">How reliable positive results are</div>
+                            </div>
+                            
+                            <div class="result-card">
+                                <div class="result-label">Recall</div>
+                                <div class="result-value" id="recall">0%</div>
+                                <div class="result-description">Ability to find all positive cases</div>
+                            </div>
+                            
+                            <div class="result-card">
+                                <div class="result-label">F1 Score</div>
+                                <div class="result-value" id="f1-score">0%</div>
+                                <div class="result-description">Balance between precision and recall</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="matrix-container">
+                        <h2 class="matrix-title">COVID-19 Test Results</h2>
+                        
+                        <div class="matrix">
+                            <div class="matrix-cell true-positive">
+                                <div class="matrix-label">True Positive</div>
+                                <div class="matrix-value" id="tp">0</div>
+                                <div class="matrix-description">Correctly identified cases</div>
+                            </div>
+                            
+                            <div class="matrix-cell false-negative">
+                                <div class="matrix-label">False Negative</div>
+                                <div class="matrix-value" id="fn">0</div>
+                                <div class="matrix-description">Missed cases</div>
+                            </div>
+                            
+                            <div class="matrix-cell false-positive">
+                                <div class="matrix-label">False Positive</div>
+                                <div class="matrix-value" id="fp">0</div>
+                                <div class="matrix-description">False alarms</div>
+                            </div>
+                            
+                            <div class="matrix-cell true-negative">
+                                <div class="matrix-label">True Negative</div>
+                                <div class="matrix-value" id="tn">0</div>
+                                <div class="matrix-description">Correctly rejected</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Visualization Page -->
+        <div class="page-container" id="visualization-page">
+            <div class="chart-container">
+                <h2 class="chart-title">Test Result Distribution</h2>
+                <canvas id="resultsChart" height="250"></canvas>
             </div>
             
-            <!-- Navigation Tabs -->
-            <div class="flex mt-6 space-x-2">
-                <button class="nav-tab active" data-tab="simulator">Simulator</button>
-                <button class="nav-tab text-blue-100 hover:text-white" data-tab="visualization">Visualization</button>
-                <button class="nav-tab text-blue-100 hover:text-white" data-tab="scenarios">Test Scenarios</button>
+            <div class="chart-container">
+                <h2 class="chart-title">Performance Metrics Comparison</h2>
+                <canvas id="metricsChart" height="250"></canvas>
+            </div>
+            
+            <div class="panel">
+                <h2 class="panel-title"><i class="fas fa-info-circle"></i> Interpretation Guide</h2>
+                <p>The charts visualize how the COVID-19 test performs across the population. The bar chart shows the distribution of test results, while the radar chart displays the key performance metrics of the test.</p>
             </div>
         </div>
-
-        <!-- Page 1: Simulator -->
-        <div id="simulator-page" class="tab-content">
-            <!-- Main Grid -->
-            <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                
-                <!-- Left Column: Inputs -->
-                <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-md border border-gray-100">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-3">Test Parameters</h2>
-                    <form id="simulation-form" class="space-y-6">
-                        <!-- Population Settings -->
-                        <div>
-                            <label for="total-patients" class="block text-sm font-medium text-gray-700">Population Tested</label>
-                            <input type="number" id="total-patients" value="1000" class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                            <p class="text-xs text-gray-500 mt-1">Number of people tested for COVID-19</p>
-                        </div>
-                        <div>
-                            <label for="actual-positives" class="block text-sm font-medium text-gray-700">Actual COVID-19 Prevalence (%)</label>
-                            <input type="range" id="actual-positives" min="0" max="100" value="10" class="slider mt-2 w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                            <div class="flex justify-between mt-1">
-                                <span class="text-xs text-gray-500">0%</span>
-                                <span id="actual-positives-value" class="text-sm text-blue-600 font-medium">10%</span>
-                                <span class="text-xs text-gray-500">100%</span>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-1">Percentage of population actually infected with COVID-19</p>
-                        </div>
-
-                        <!-- Test Kit Characteristics -->
-                        <div class="pt-4 border-t">
-                             <h3 class="text-md font-semibold text-gray-700 mb-3">COVID-19 Test Kit Characteristics</h3>
-                             <div>
-                                <label for="sensitivity" class="block text-sm font-medium text-gray-700">Sensitivity (True Positive Rate)</label>
-                                <input type="range" id="sensitivity" min="0" max="100" value="95" class="slider mt-2 w-full h-2 bg-red-100 rounded-lg appearance-none cursor-pointer">
-                                <div class="flex justify-between mt-1">
-                                    <span class="text-xs text-gray-500">0%</span>
-                                    <span id="sensitivity-value" class="text-sm text-blue-600 font-medium">95%</span>
-                                    <span class="text-xs text-gray-500">100%</span>
-                                </div>
-                                <p class="text-xs text-gray-500 mt-1">Ability to correctly identify COVID-19 positive cases</p>
-                            </div>
-                             <div class="mt-4">
-                                <label for="specificity" class="block text-sm font-medium text-gray-700">Specificity (True Negative Rate)</label>
-                                <input type="range" id="specificity" min="0" max="100" value="98" class="slider mt-2 w-full h-2 bg-green-100 rounded-lg appearance-none cursor-pointer">
-                                <div class="flex justify-between mt-1">
-                                    <span class="text-xs text-gray-500">0%</span>
-                                    <span id="specificity-value" class="text-sm text-blue-600 font-medium">98%</span>
-                                    <span class="text-xs text-gray-500">100%</span>
-                                </div>
-                                <p class="text-xs text-gray-500 mt-1">Ability to correctly identify COVID-19 negative cases</p>
-                            </div>
-                        </div>
-                        
-                        <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-opacity-50 transition-all transform hover:scale-[1.02] shadow-md">
-                            Evaluate Test Kit
-                        </button>
-                    </form>
-                </div>
-
-                <!-- Right Column: Results -->
-                <div class="lg:col-span-3">
-                    <!-- Confusion Matrix -->
-                    <div class="matrix-container">
-                        <h2 class="text-xl font-bold text-gray-800 mb-4 px-2">COVID-19 Test Results</h2>
-                        <div class="grid grid-cols-12 gap-3">
-                            <div class="col-span-2"></div>
-                            <div class="col-span-10 text-center font-semibold text-gray-700 pb-2">Test Result</div>
-                            
-                            <div class="col-span-2 row-span-2 flex items-center justify-center font-semibold text-gray-700">
-                                <span class="-rotate-90 text-sm uppercase tracking-wider">Actual Condition</span>
-                            </div>
-                            <div class="col-span-1 flex items-center justify-end font-semibold text-gray-500 text-sm">COVID+</div>
-                            <div class="col-span-4 matrix-cell bg-emerald-50 border border-emerald-200 hover:bg-emerald-100">
-                                <span id="tp" class="matrix-value text-emerald-600">0</span>
-                                <span class="matrix-label text-emerald-700">True Positive</span>
-                                <span class="text-xs text-gray-500 mt-1">Correctly identified</span>
-                            </div>
-                            <div class="col-span-4 matrix-cell bg-rose-50 border border-rose-200 hover:bg-rose-100">
-                                <span id="fn" class="matrix-value text-rose-600">0</span>
-                                <span class="matrix-label text-rose-700">False Negative</span>
-                                <span class="text-xs text-gray-500 mt-1">Missed cases</span>
-                            </div>
-                            <div class="col-span-1"></div>
-
-                            <div class="col-span-1 flex items-center justify-end font-semibold text-gray-500 text-sm">COVID-</div>
-                            <div class="col-span-4 matrix-cell bg-rose-50 border border-rose-200 hover:bg-rose-100">
-                                <span id="fp" class="matrix-value text-rose-600">0</span>
-                                <span class="matrix-label text-rose-700">False Positive</span>
-                                <span class="text-xs text-gray-500 mt-1">False alarms</span>
-                            </div>
-                            <div class="col-span-4 matrix-cell bg-emerald-50 border border-emerald-200 hover:bg-emerald-100">
-                                <span id="tn" class="matrix-value text-emerald-600">0</span>
-                                <span class="matrix-label text-emerald-700">True Negative</span>
-                                <span class="text-xs text-gray-500 mt-1">Correctly rejected</span>
-                            </div>
-                            <div class="col-span-1"></div>
-                        </div>
+        
+        <!-- Scenarios Page -->
+        <div class="page-container" id="scenarios-page">
+            <div class="scenario-card" data-scenario="lowPrevalence">
+                <h3 class="scenario-title">Low Prevalence Scenario</h3>
+                <p class="scenario-description">Routine screening in a low-risk population with 2% prevalence</p>
+                <div class="scenario-stats">
+                    <div class="stat">
+                        <span class="stat-value">95%</span>
+                        <span class="stat-label">Sensitivity</span>
                     </div>
-
-                    <!-- Performance Metrics -->
-                    <div class="mt-8">
-                        <h2 class="text-xl font-bold text-gray-800 mb-4">Test Performance Metrics</h2>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-                            <div class="metric-card">
-                                <div class="flex items-center">
-                                    <div class="p-2 bg-blue-100 rounded-lg">
-                                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    </div>
-                                    <h3 class="font-bold text-gray-700 ml-3">Accuracy</h3>
-                                </div>
-                                <p id="accuracy" class="text-4xl font-bold text-gray-800 mt-4">0%</p>
-                                <p class="text-xs text-gray-500 mt-1">Overall test correctness</p>
-                            </div>
-                            <div class="metric-card">
-                                <div class="flex items-center">
-                                    <div class="p-2 bg-green-100 rounded-lg">
-                                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path></svg>
-                                    </div>
-                                    <h3 class="font-bold text-gray-700 ml-3">Precision</h3>
-                                </div>
-                                <p id="precision" class="text-4xl font-bold text-gray-800 mt-4">0%</p>
-                                <p class="text-xs text-gray-500 mt-1">How reliable positive results are</p>
-                            </div>
-                            <div class="metric-card">
-                                <div class="flex items-center">
-                                    <div class="p-2 bg-red-100 rounded-lg">
-                                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    </div>
-                                    <h3 class="font-bold text-gray-700 ml-3">Recall</h3>
-                                </div>
-                                <p id="recall" class="text-4xl font-bold text-gray-800 mt-4">0%</p>
-                                <p class="text-xs text-gray-500 mt-1">Ability to find all positive cases</p>
-                            </div>
-                            <div class="metric-card">
-                                <div class="flex items-center">
-                                    <div class="p-2 bg-purple-100 rounded-lg">
-                                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin-rule="evenodd" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-                                    </div>
-                                    <h3 class="font-bold text-gray-700 ml-3">F1 Score</h3>
-                                </div>
-                                <p id="f1-score" class="text-4xl font-bold text-gray-800 mt-4">0%</p>
-                                <p class="text-xs text-gray-500 mt-1">Balance between precision and recall</p>
-                            </div>
-                        </div>
+                    <div class="stat">
+                        <span class="stat-value">98%</span>
+                        <span class="stat-label">Specificity</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value">2%</span>
+                        <span class="stat-label">Prevalence</span>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Page 2: Explanation -->
-        <div id="explanation-page" class="hidden tab-content">
-            <!-- Header -->
-            <div class="flex justify-between items-center mb-10">
-                 <button id="show-simulator-btn" class="flex-shrink-0 bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-5 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-sm flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                    Back to Simulator
-                </button>
-                <div class="text-center flex-grow">
-                    <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Understanding COVID-19 Test Accuracy</h1>
-                    <p class="text-gray-600 mt-2">Learn how to evaluate COVID-19 diagnostic test performance</p>
+            
+            <div class="scenario-card" data-scenario="outbreak">
+                <h3 class="scenario-title">Outbreak Scenario</h3>
+                <p class="scenario-description">Testing during an outbreak with 25% prevalence</p>
+                <div class="scenario-stats">
+                    <div class="stat">
+                        <span class="stat-value">90%</span>
+                        <span class="stat-label">Sensitivity</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value">99%</span>
+                        <span class="stat-label">Specificity</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value">25%</span>
+                        <span class="stat-label">Prevalence</span>
+                    </div>
                 </div>
-                <div class="w-48"></div> <!-- Spacer to balance the button -->
             </div>
-
-            <!-- Explanation Content -->
-            <div class="space-y-10">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-                    <!-- Step 1 -->
-                    <div class="explanation-card">
-                        <div class="flex justify-center mb-4">
-                            <span class="flex items-center justify-center w-16 h-16 bg-blue-100 text-blue-600 rounded-full text-2xl font-bold ring-8 ring-blue-50">1</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800">Set Test Parameters</h3>
-                        <p class="text-gray-600 mt-2">Define your scenario: population size, COVID-19 prevalence rate, and the test kit's sensitivity and specificity.</p>
+            
+            <div class="scenario-card" data-scenario="rapidTest">
+                <h3 class="scenario-title">Rapid Antigen Test</h3>
+                <p class="scenario-description">Typical rapid test with moderate sensitivity but high specificity</p>
+                <div class="scenario-stats">
+                    <div class="stat">
+                        <span class="stat-value">80%</span>
+                        <span class="stat-label">Sensitivity</span>
                     </div>
-                    <!-- Step 2 -->
-                    <div class="explanation-card">
-                        <div class="flex justify-center mb-4">
-                            <span class="flex items-center justify-center w-16 h-16 bg-blue-100 text-blue-600 rounded-full text-2xl font-bold ring-8 ring-blue-50">2</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800">Run Evaluation</h3>
-                        <p class="text-gray-600 mt-2">The simulator calculates the four outcomes of the confusion matrix by applying the test characteristics to your defined population.</p>
+                    <div class="stat">
+                        <span class="stat-value">97%</span>
+                        <span class="stat-label">Specificity</span>
                     </div>
-                    <!-- Step 3 -->
-                    <div class="explanation-card">
-                        <div class="flex justify-center mb-4">
-                            <span class="flex items-center justify-center w-16 h-16 bg-blue-100 text-blue-600 rounded-full text-2xl font-bold ring-8 ring-blue-50">3</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800">Interpret Results</h3>
-                        <p class="text-gray-600 mt-2">Analyze the confusion matrix and performance metrics to understand the test kit's effectiveness in real-world conditions.</p>
+                    <div class="stat">
+                        <span class="stat-value">10%</span>
+                        <span class="stat-label">Prevalence</span>
                     </div>
                 </div>
-
-                <!-- Key Terms -->
-                <div>
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Key Metrics for COVID-19 Testing</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="explanation-card">
-                            <h4 class="font-bold text-lg text-gray-800">Accuracy</h4>
-                            <p class="text-gray-600 mt-1 flex-grow">The percentage of all test results that are correct. Important but can be misleading with imbalanced data (low prevalence).</p>
-                            <div class="formula">(True Positives + True Negatives) / Total Tests</div>
-                        </div>
-                        <div class="explanation-card">
-                            <h4 class="font-bold text-lg text-gray-800">Precision</h4>
-                            <p class="text-gray-600 mt-1 flex-grow">When the test says "Positive", how often is it correct? High precision means fewer false alarms and unnecessary quarantines.</p>
-                            <div class="formula">True Positives / (True Positives + False Positives)</div>
-                        </div>
-                        <div class="explanation-card">
-                            <h4 class="font-bold text-lg text-gray-800">Recall (Sensitivity)</h4>
-                            <p class="text-gray-600 mt-1 flex-grow">Of all infected people, what percentage test positive? High recall means fewer infected people are missed (false negatives).</p>
-                            <div class="formula">True Positives / (True Positives + False Negatives)</div>
-                        </div>
-                         <div class="explanation-card">
-                            <h4 class="font-bold text-lg text-gray-800">F1 Score</h4>
-                            <p class="text-gray-600 mt-1 flex-grow">The harmonic mean of Precision and Recall. Provides a single metric that balances both concerns for COVID-19 testing.</p>
-                            <div class="formula">2 × (Precision × Recall) / (Precision + Recall)</div>
-                        </div>
+            </div>
+            
+            <div class="scenario-card" data-scenario="pcrTest">
+                <h3 class="scenario-title">PCR Test</h3>
+                <p class="scenario-description">Gold standard PCR test with high sensitivity and specificity</p>
+                <div class="scenario-stats">
+                    <div class="stat">
+                        <span class="stat-value">98%</span>
+                        <span class="stat-label">Sensitivity</span>
                     </div>
-                </div>
-                
-                <!-- Real-world Implications -->
-                <div class="explanation-card">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Real-world Implications for COVID-19 Testing</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                        <div>
-                            <h4 class="font-bold text-blue-700 mb-2">False Negatives</h4>
-                            <p class="text-gray-600">Infected individuals mistakenly told they're negative may:</p>
-                            <ul class="text-gray-600 text-sm mt-2 list-disc pl-5">
-                                <li>Fail to isolate, spreading the virus</li>
-                                <li>Not receive timely treatment</li>
-                                <li>Become seriously ill due to delayed care</li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-blue-700 mb-2">False Positives</h4>
-                            <p class="text-gray-600">Healthy individuals mistakenly told they're positive may:</p>
-                            <ul class="text-gray-600 text-sm mt-2 list-disc pl-5">
-                                <li>Unnecessarily isolate from work/school</li>
-                                <li>Experience stress and anxiety</li>
-                                <li>Undergo unnecessary medical procedures</li>
-                            </ul>
-                        </div>
+                    <div class="stat">
+                        <span class="stat-value">99.5%</span>
+                        <span class="stat-label">Specificity</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value">10%</span>
+                        <span class="stat-label">Prevalence</span>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- Page 3: Visualization -->
-        <div id="visualization-page" class="hidden tab-content">
-            <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">COVID-19 Test Result Distribution</h2>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div>
-                        <canvas id="resultsChart" width="400" height="300"></canvas>
-                    </div>
-                    <div>
-                        <canvas id="metricsChart" width="400" height="300"></canvas>
-                    </div>
+        <!-- How It Works Page -->
+        <div class="page-container" id="explanation-page">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <h3 class="step-title">Set Test Parameters</h3>
+                <p>Define your scenario: population size, COVID-19 prevalence rate, and the test kit's sensitivity and specificity.</p>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <h3 class="step-title">Run Evaluation</h3>
+                <p>The simulator calculates the four outcomes of the confusion matrix by applying the test characteristics to your defined population.</p>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <h3 class="step-title">Interpret Results</h3>
+                <p>Analyze the confusion matrix and performance metrics to understand the test kit's effectiveness in real-world conditions.</p>
+            </div>
+            
+            <div class="panel">
+                <h2 class="panel-title"><i class="fas fa-lightbulb"></i> Key Metrics Explained</h2>
+                <div class="input-group">
+                    <h4>Accuracy</h4>
+                    <p>The percentage of all test results that are correct. Important but can be misleading with imbalanced data (low prevalence).</p>
+                    <div class="formula">(True Positives + True Negatives) / Total Tests</div>
                 </div>
-                <div class="mt-8 bg-blue-50 p-4 rounded-lg border border-blue-100">
-                    <h3 class="font-bold text-blue-800 mb-2">Interpretation Guide</h3>
-                    <p class="text-blue-700 text-sm">The charts visualize how the COVID-19 test performs across the population. The bar chart shows the distribution of test results, while the radar chart displays the key performance metrics of the test.</p>
+                
+                <div class="input-group">
+                    <h4>Precision</h4>
+                    <p>When the test says "Positive", how often is it correct? High precision means fewer false alarms and unnecessary quarantines.</p>
+                    <div class="formula">True Positives / (True Positives + False Positives)</div>
+                </div>
+                
+                <div class="input-group">
+                    <h4>Recall (Sensitivity)</h4>
+                    <p>Of all infected people, what percentage test positive? High recall means fewer infected people are missed (false negatives).</p>
+                    <div class="formula">True Positives / (True Positives + False Negatives)</div>
+                </div>
+                
+                <div class="input-group">
+                    <h4>F1 Score</h4>
+                    <p>The harmonic mean of Precision and Recall. Provides a single metric that balances both concerns for COVID-19 testing.</p>
+                    <div class="formula">2 × (Precision × Recall) / (Precision + Recall)</div>
                 </div>
             </div>
         </div>
         
-        <!-- Page 4: Scenarios -->
-        <div id="scenarios-page" class="hidden tab-content">
-            <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">COVID-19 Test Scenarios</h2>
-                <p class="text-gray-600 mb-6">Select a scenario to see how different test characteristics perform in various situations:</p>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="scenario-card border border-blue-200 bg-blue-50 rounded-xl p-5 cursor-pointer transition-all hover:shadow-md" data-scenario="lowPrevalence">
-                        <h3 class="font-bold text-blue-800 text-lg">Low Prevalence Scenario</h3>
-                        <p class="text-sm text-blue-700 mt-2">Routine screening in a low-risk population with 2% prevalence</p>
-                        <div class="text-xs text-blue-600 mt-3">
-                            <span class="font-medium">Sensitivity:</span> 95% | 
-                            <span class="font-medium">Specificity:</span> 98%
-                        </div>
-                    </div>
-                    
-                    <div class="scenario-card border border-red-200 bg-red-50 rounded-xl p-5 cursor-pointer transition-all hover:shadow-md" data-scenario="outbreak">
-                        <h3 class="font-bold text-red-800 text-lg">Outbreak Scenario</h3>
-                        <p class="text-sm text-red-700 mt-2">Testing during an outbreak with 25% prevalence</p>
-                        <div class="text-xs text-red-600 mt-3">
-                            <span class="font-medium">Sensitivity:</span> 90% | 
-                            <span class="font-medium">Specificity:</span> 99%
-                        </div>
-                    </div>
-                    
-                    <div class="scenario-card border border-green-200 bg-green-50 rounded-xl p-5 cursor-pointer transition-all hover:shadow-md" data-scenario="rapidTest">
-                        <h3 class="font-bold text-green-800 text-lg">Rapid Antigen Test</h3>
-                        <p class="text-sm text-green-700 mt-2">Typical rapid test with moderate sensitivity but high specificity</p>
-                        <div class="text-xs text-green-600 mt-3">
-                            <span class="font-medium">Sensitivity:</span> 80% | 
-                            <span class="font-medium">Specificity:</span> 97%
-                        </div>
-                    </div>
-                    
-                    <div class="scenario-card border border-purple-200 bg-purple-50 rounded-xl p-5 cursor-pointer transition-all hover:shadow-md" data-scenario="pcrTest">
-                        <h3 class="font-bold text-purple-800 text-lg">PCR Test</h3>
-                        <p class="text-sm text-purple-700 mt-2">Gold standard PCR test with high sensitivity and specificity</p>
-                        <div class="text-xs text-purple-600 mt-3">
-                            <span class="font-medium">Sensitivity:</span> 98% | 
-                            <span class="font-medium">Specificity:</span> 99.5%
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="footer">
+            <p>COVID-19 Test Accuracy Simulator © 2023 | For educational purposes only</p>
         </div>
     </div>
 
     <script>
-        // --- Page Navigation ---
-        const simulatorPage = document.getElementById('simulator-page');
-        const explanationPage = document.getElementById('explanation-page');
-        const visualizationPage = document.getElementById('visualization-page');
-        const scenariosPage = document.getElementById('scenarios-page');
-        const showExplanationBtn = document.getElementById('show-explanation-btn');
-        const showSimulatorBtn = document.getElementById('show-simulator-btn');
-        const tabButtons = document.querySelectorAll('.nav-tab');
-        const tabContents = document.querySelectorAll('.tab-content');
-
-        showExplanationBtn.addEventListener('click', () => {
-            showTab('explanation');
-        });
-
-        showSimulatorBtn.addEventListener('click', () => {
-            showTab('simulator');
-        });
-
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const tab = button.getAttribute('data-tab');
-                showTab(tab);
-            });
-        });
-
-        function showTab(tabName) {
-            // Hide all tab contents
-            tabContents.forEach(content => {
-                content.classList.add('hidden');
-            });
-            
-            // Remove active class from all tabs
-            tabButtons.forEach(button => {
-                button.classList.remove('active');
-                button.classList.add('text-blue-100', 'hover:text-white');
-            });
-            
-            // Show the selected tab and mark as active
-            document.getElementById(`${tabName}-page`).classList.remove('hidden');
-            document.querySelector(`.nav-tab[data-tab="${tabName}"]`).classList.add('active');
-            document.querySelector(`.nav-tab[data-tab="${tabName}"]`).classList.remove('text-blue-100', 'hover:text-white');
-        }
-
-        // --- Simulator Logic ---
+        // DOM Elements
         const form = document.getElementById('simulation-form');
         const totalPatientsInput = document.getElementById('total-patients');
         const actualPositivesSlider = document.getElementById('actual-positives');
         const sensitivitySlider = document.getElementById('sensitivity');
         const specificitySlider = document.getElementById('specificity');
-
+        
         const actualPositivesValue = document.getElementById('actual-positives-value');
         const sensitivityValue = document.getElementById('sensitivity-value');
         const specificityValue = document.getElementById('specificity-value');
-
+        
         const tpCell = document.getElementById('tp');
         const fnCell = document.getElementById('fn');
         const fpCell = document.getElementById('fp');
         const tnCell = document.getElementById('tn');
-
+        
         const accuracyDisplay = document.getElementById('accuracy');
         const precisionDisplay = document.getElementById('precision');
         const recallDisplay = document.getElementById('recall');
         const f1Display = document.getElementById('f1-score');
-
+        
         // Charts
         let resultsChart = null;
         let metricsChart = null;
-
+        
+        // Page Navigation
+        const navButtons = document.querySelectorAll('.nav-btn');
+        const pageContainers = document.querySelectorAll('.page-container');
+        
+        // Slider value update functionality
         function updateSliderValue(slider, display) {
             display.textContent = `${slider.value}%`;
         }
-
+        
+        // Add event listeners to sliders
         actualPositivesSlider.addEventListener('input', () => updateSliderValue(actualPositivesSlider, actualPositivesValue));
         sensitivitySlider.addEventListener('input', () => updateSliderValue(sensitivitySlider, sensitivityValue));
         specificitySlider.addEventListener('input', () => updateSliderValue(specificitySlider, specificityValue));
-
+        
+        // Form submission handler
         form.addEventListener('submit', function(event) {
             event.preventDefault();
             runSimulation();
         });
         
-        document.addEventListener('DOMContentLoaded', function() {
-            runSimulation();
-            initCharts();
+        // Mobile navigation
+        navButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const pageId = button.getAttribute('data-page');
+                navButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                pageContainers.forEach(container => container.classList.remove('active'));
+                document.getElementById(`${pageId}-page`).classList.add('active');
+                
+                // If visualization page is selected, update charts
+                if (pageId === 'visualization') {
+                    updateCharts();
+                }
+            });
         });
-
-        function runSimulation() {
-            const totalPatients = parseInt(totalPatientsInput.value);
-            const positiveRate = parseInt(actualPositivesSlider.value) / 100;
-            const sensitivity = parseInt(sensitivitySlider.value) / 100;
-            const specificity = parseInt(specificitySlider.value) / 100;
-
-            if (isNaN(totalPatients) || totalPatients <= 0) {
-                console.error("Please enter a valid number of patients.");
-                totalPatientsInput.value = 1000;
-                return;
+        
+        // Scenario cards
+        const scenarioCards = document.querySelectorAll('.scenario-card');
+        scenarioCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const scenario = card.getAttribute('data-scenario');
+                loadScenario(scenario);
+                
+                // Switch to simulator page
+                navButtons.forEach(btn => btn.classList.remove('active'));
+                document.querySelector('[data-page="simulator"]').classList.add('active');
+                
+                pageContainers.forEach(container => container.classList.remove('active'));
+                document.getElementById('simulator-page').classList.add('active');
+                
+                // Run simulation with new values
+                runSimulation();
+            });
+        });
+        
+        // Load scenario function
+        function loadScenario(scenario) {
+            switch(scenario) {
+                case 'lowPrevalence':
+                    actualPositivesSlider.value = 2;
+                    sensitivitySlider.value = 95;
+                    specificitySlider.value = 98;
+                    break;
+                case 'outbreak':
+                    actualPositivesSlider.value = 25;
+                    sensitivitySlider.value = 90;
+                    specificitySlider.value = 99;
+                    break;
+                case 'rapidTest':
+                    actualPositivesSlider.value = 10;
+                    sensitivitySlider.value = 80;
+                    specificitySlider.value = 97;
+                    break;
+                case 'pcrTest':
+                    actualPositivesSlider.value = 10;
+                    sensitivitySlider.value = 98;
+                    specificitySlider.value = 99.5;
+                    break;
             }
-
-            const actualPositives = Math.round(totalPatients * positiveRate);
-            const actualNegatives = totalPatients - actualPositives;
-
-            const tp = Math.round(actualPositives * sensitivity);
-            const fn = actualPositives - tp;
-            const tn = Math.round(actualNegatives * specificity);
-            const fp = actualNegatives - tn;
-
-            tpCell.textContent = tp;
-            fnCell.textContent = fn;
-            fpCell.textContent = fp;
-            tnCell.textContent = tn;
-
-            const total = totalPatients;
-            const predictedPositives = tp + fp;
-
-            const accuracy = total > 0 ? ((tp + tn) / total) : 0;
-            accuracyDisplay.textContent = `${(accuracy * 100).toFixed(1)}%`;
-
-            const precision = predictedPositives > 0 ? (tp / predictedPositives) : 0;
-            precisionDisplay.textContent = `${(precision * 100).toFixed(1)}%`;
-
-            const recall = actualPositives > 0 ? (tp / actualPositives) : 0;
-            recallDisplay.textContent = `${(recall * 100).toFixed(1)}%`;
-
-            const f1 = (precision + recall) > 0 ? 2 * (precision * recall) / (precision + recall) : 0;
-            f1Display.textContent = `${(f1 * 100).toFixed(1)}%`;
             
-            // Update charts if they exist
-            if (resultsChart && metricsChart) {
-                updateCharts(tp, fn, fp, tn, accuracy, precision, recall, f1);
-            }
+            // Update slider displays
+            updateSliderValue(actualPositivesSlider, actualPositivesValue);
+            updateSliderValue(sensitivitySlider, sensitivityValue);
+            updateSliderValue(specificitySlider, specificityValue);
         }
-
+        
+        // Initialize charts
         function initCharts() {
             const resultsCtx = document.getElementById('resultsChart').getContext('2d');
             const metricsCtx = document.getElementById('metricsChart').getContext('2d');
@@ -617,7 +937,20 @@
             });
         }
         
-        function updateCharts(tp, fn, fp, tn, accuracy, precision, recall, f1) {
+        // Update charts function
+        function updateCharts() {
+            if (!resultsChart || !metricsChart) return;
+            
+            const tp = parseInt(tpCell.textContent);
+            const fn = parseInt(fnCell.textContent);
+            const fp = parseInt(fpCell.textContent);
+            const tn = parseInt(tnCell.textContent);
+            
+            const accuracy = parseFloat(accuracyDisplay.textContent) / 100;
+            const precision = parseFloat(precisionDisplay.textContent) / 100;
+            const recall = parseFloat(recallDisplay.textContent) / 100;
+            const f1 = parseFloat(f1Display.textContent) / 100;
+            
             // Update results chart
             resultsChart.data.datasets[0].data = [tp, fn, fp, tn];
             resultsChart.update();
@@ -632,48 +965,65 @@
             metricsChart.update();
         }
         
-        // Scenario handling
-        const scenarioCards = document.querySelectorAll('.scenario-card');
-        scenarioCards.forEach(card => {
-            card.addEventListener('click', () => {
-                const scenario = card.getAttribute('data-scenario');
-                loadScenario(scenario);
-                showTab('simulator');
-            });
-        });
-        
-        function loadScenario(scenario) {
-            switch(scenario) {
-                case 'lowPrevalence':
-                    actualPositivesSlider.value = 2;
-                    sensitivitySlider.value = 95;
-                    specificitySlider.value = 98;
-                    break;
-                case 'outbreak':
-                    actualPositivesSlider.value = 25;
-                    sensitivitySlider.value = 90;
-                    specificitySlider.value = 99;
-                    break;
-                case 'rapidTest':
-                    actualPositivesSlider.value = 10;
-                    sensitivitySlider.value = 80;
-                    specificitySlider.value = 97;
-                    break;
-                case 'pcrTest':
-                    actualPositivesSlider.value = 10;
-                    sensitivitySlider.value = 98;
-                    specificitySlider.value = 99.5;
-                    break;
+        // Run simulation function
+        function runSimulation() {
+            const totalPatients = parseInt(totalPatientsInput.value);
+            const positiveRate = parseInt(actualPositivesSlider.value) / 100;
+            const sensitivity = parseInt(sensitivitySlider.value) / 100;
+            const specificity = parseInt(specificitySlider.value) / 100;
+            
+            // Validate input
+            if (isNaN(totalPatients) || totalPatients <= 0) {
+                alert("Please enter a valid number of patients.");
+                totalPatientsInput.value = 1000;
+                return;
             }
             
-            // Update slider displays
+            // Calculate values
+            const actualPositives = Math.round(totalPatients * positiveRate);
+            const actualNegatives = totalPatients - actualPositives;
+            
+            const tp = Math.round(actualPositives * sensitivity);
+            const fn = actualPositives - tp;
+            const tn = Math.round(actualNegatives * specificity);
+            const fp = actualNegatives - tn;
+            
+            // Update matrix values
+            tpCell.textContent = tp;
+            fnCell.textContent = fn;
+            fpCell.textContent = fp;
+            tnCell.textContent = tn;
+            
+            // Calculate metrics
+            const total = totalPatients;
+            const predictedPositives = tp + fp;
+            
+            const accuracy = total > 0 ? ((tp + tn) / total) : 0;
+            accuracyDisplay.textContent = `${(accuracy * 100).toFixed(1)}%`;
+            
+            const precision = predictedPositives > 0 ? (tp / predictedPositives) : 0;
+            precisionDisplay.textContent = `${(precision * 100).toFixed(1)}%`;
+            
+            const recall = actualPositives > 0 ? (tp / actualPositives) : 0;
+            recallDisplay.textContent = `${(recall * 100).toFixed(1)}%`;
+            
+            const f1 = (precision + recall) > 0 ? 2 * (precision * recall) / (precision + recall) : 0;
+            f1Display.textContent = `${(f1 * 100).toFixed(1)}%`;
+            
+            // Update charts if they exist
+            if (resultsChart && metricsChart) {
+                updateCharts();
+            }
+        }
+        
+        // Initial update
+        document.addEventListener('DOMContentLoaded', function() {
             updateSliderValue(actualPositivesSlider, actualPositivesValue);
             updateSliderValue(sensitivitySlider, sensitivityValue);
             updateSliderValue(specificitySlider, specificityValue);
-            
-            // Run simulation with new values
+            initCharts();
             runSimulation();
-        }
+        });
     </script>
 </body>
 </html>
